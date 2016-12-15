@@ -38,7 +38,7 @@ import (
 //				fmt.Println("My IP address is:", ip)
 //			}
 //		}
-func GetIp(dest string) (string, error) {
+func GetIpBy(dest string) (string, error) {
 	b := &backoff.Backoff{
 		Jitter: true,
 	}
@@ -48,8 +48,6 @@ func GetIp(dest string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-
-	//req.Header.Add("User-Agent", USER_AGENT)
 
 	for tries := 0; tries < MaxTries; tries++ {
 		resp, err := client.Do(req)
@@ -61,48 +59,24 @@ func GetIp(dest string) (string, error) {
 
 		defer resp.Body.Close()
 
-		out, err := ioutil.ReadAll(resp.Body)
+		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
 			return "", err
 		}
 
 		if resp.StatusCode != 200 {
-			return "", errors.New(dest + " status code " + strconv.Itoa(resp.StatusCode) + ", body: " + string(out))
+			return "", errors.New(dest + " status code " + strconv.Itoa(resp.StatusCode) + ", body: " + string(body))
 		}
 
-		tout := strings.TrimSpace(string(out))
-		ip := net.ParseIP(tout)
+		tb := strings.TrimSpace(string(body))
+		ip := net.ParseIP(tb)
 		if ip == nil {
-			return "", errors.New("IP address not valid: " + tout)
+			return "", errors.New("IP address not valid: " + tb)
 		}
 		return ip.String(), nil
 	}
 
 	return "", errors.New("Failed to reach " + dest)
-}
-
-func isValid(rs []string) bool {
-	if len(rs) < 2 {
-		return false
-	}
-	for _, s := range rs {
-		if s != rs[0] {
-			return false
-		}
-	}
-	return true
-}
-
-func validateAppend(rs []string, r string) ([]string, error) {
-	if len(rs) < 2 {
-		return rs, nil
-	}
-	for _, s := range rs {
-		if r != s {
-			return nil, errors.New("not identical")
-		}
-	}
-	return append(rs, r), nil
 }
 
 func detailErr(err error, errs []error) error {
@@ -128,7 +102,7 @@ func validate(rs []string) (string, error) {
 }
 
 func worker(d string, r chan<- string, e chan<- error) {
-	ip, err := GetIp(d)
+	ip, err := GetIpBy(d)
 	if err != nil {
 		e <- err
 		return
