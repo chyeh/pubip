@@ -4,6 +4,7 @@ package pubip
 
 import (
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -92,6 +93,31 @@ func isValid(rs []string) bool {
 	return true
 }
 
+func validateAppend(rs []string, r string) ([]string, error) {
+	if len(rs) < 2 {
+		return rs, nil
+	}
+	for _, s := range rs {
+		if r != s {
+			return nil, errors.New("not identical")
+		}
+	}
+	return append(rs, r), nil
+}
+
+func validate(rs []string) (string, error) {
+	if len(rs) < 3 {
+		return "", fmt.Errorf("Less than %d results from %d APIs", 3, len(APIURIs))
+	}
+	first := rs[0]
+	for i := 1; i < len(rs); i++ {
+		if first != rs[i] {
+			return "", errors.New("Results are not identical")
+		}
+	}
+	return first, nil
+}
+
 func worker(d string, r chan<- string, e chan<- error) {
 	ip, err := GetIp(d)
 	if err != nil {
@@ -104,6 +130,7 @@ func worker(d string, r chan<- string, e chan<- error) {
 func Get() (string, error) {
 	var results []string
 	var errs []string
+	var err error
 	resultCh := make(chan string, len(APIURIs))
 	errCh := make(chan error, len(APIURIs))
 
@@ -112,15 +139,29 @@ func Get() (string, error) {
 	}
 	for {
 		select {
-		case err := <-errCh:
+		case err = <-errCh:
 			errs = append(errs, err.Error())
 		case r := <-resultCh:
+			//results = append(results, r)
+			//if isValid(results) {
+			//	return results[0], nil
+			//}
+
+			//results, err = validateAppend(results, r)
+			//if err != nil {
+			//	errs = append(errs, err.Error())
+			//} else {
+			//	return r, nil
+			//}
+
 			results = append(results, r)
-			if isValid(results) {
-				return results[0], nil
-			}
 		case <-time.After(Timeout):
-			return "", errors.New(strings.Join(errs, "\n"))
+			r, err := validate(results)
+			if err != nil {
+				return "", err
+			}
+			//return "", errors.New(strings.Join(errs, "\n"))
+			return r, nil
 		}
 	}
 }

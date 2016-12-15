@@ -37,4 +37,4 @@ var APIURIs = []string{
 //	strings.Title(runtime.GOOS),
 //)
 
-var Timeout = time.Second * 3
+var Timeout = time.Second
