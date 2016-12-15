@@ -67,7 +67,7 @@ func GetIp(dest string) (string, error) {
 		}
 
 		if resp.StatusCode != 200 {
-			return "", errors.New(dest + " status code" + strconv.Itoa(resp.StatusCode) + ", body: " + string(out))
+			return "", errors.New(dest + " status code " + strconv.Itoa(resp.StatusCode) + ", body: " + string(out))
 		}
 
 		tout := strings.TrimSpace(string(out))
@@ -105,6 +105,15 @@ func validateAppend(rs []string, r string) ([]string, error) {
 	return append(rs, r), nil
 }
 
+func detailErr(err error, errs []error) error {
+	errStrs := []string{err.Error()}
+	for _, e := range errs {
+		errStrs = append(errStrs, e.Error())
+	}
+	j := strings.Join(errStrs, "\n")
+	return errors.New(j)
+}
+
 func validate(rs []string) (string, error) {
 	if len(rs) < 3 {
 		return "", fmt.Errorf("Less than %d results from %d APIs", 3, len(APIURIs))
@@ -112,7 +121,7 @@ func validate(rs []string) (string, error) {
 	first := rs[0]
 	for i := 1; i < len(rs); i++ {
 		if first != rs[i] {
-			return "", errors.New("Results are not identical")
+			return "", fmt.Errorf("Results are not identical: %s", rs)
 		}
 	}
 	return first, nil
@@ -129,9 +138,8 @@ func worker(d string, r chan<- string, e chan<- error) {
 
 func Get() (string, error) {
 	var results []string
-	var errs []string
-	var err error
 	resultCh := make(chan string, len(APIURIs))
+	var errs []error
 	errCh := make(chan error, len(APIURIs))
 
 	for _, d := range APIURIs {
@@ -139,28 +147,15 @@ func Get() (string, error) {
 	}
 	for {
 		select {
-		case err = <-errCh:
-			errs = append(errs, err.Error())
+		case err := <-errCh:
+			errs = append(errs, err)
 		case r := <-resultCh:
-			//results = append(results, r)
-			//if isValid(results) {
-			//	return results[0], nil
-			//}
-
-			//results, err = validateAppend(results, r)
-			//if err != nil {
-			//	errs = append(errs, err.Error())
-			//} else {
-			//	return r, nil
-			//}
-
 			results = append(results, r)
 		case <-time.After(Timeout):
 			r, err := validate(results)
 			if err != nil {
-				return "", err
+				return "", detailErr(err, errs)
 			}
-			//return "", errors.New(strings.Join(errs, "\n"))
 			return r, nil
 		}
 	}
