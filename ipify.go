@@ -105,7 +105,7 @@ func Get() (string, error) {
 	var results []string
 	var errs []string
 	resultCh := make(chan string, len(APIURIs))
-	errCh := make(chan error)
+	errCh := make(chan error, len(APIURIs))
 
 	for _, d := range APIURIs {
 		go worker(d, resultCh, errCh)
