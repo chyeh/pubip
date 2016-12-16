@@ -2,13 +2,13 @@ package pubip
 
 import "time"
 
-// The version of this library.
+// Version indicates the version of this library.
 const Version = "1.0.0"
 
-// The maximum amount of tries to attempt when making API calls.
+// MaxTries is the maximum amount of tries to attempt to one service.
 const MaxTries = 3
 
-// This is the ipify service base URI.  This is where all API requests go.
+// APIURIs is the URIs of the services.
 var APIURIs = []string{
 	"https://api.ipify.org",
 	"http://myexternalip.com/raw",
@@ -26,4 +26,5 @@ var APIURIs = []string{
 	"https://shtuff.it/myip/short",
 }
 
+// Timeout sets the time limit of collecting results from different services.
 var Timeout = time.Second

@@ -15,7 +15,8 @@ import (
 	"github.com/jpillora/backoff"
 )
 
-// GetIpBy queries an API to retrieve this machine's public IP address.
+// GetIpBy queries an API to retrieve a `net.IP` of this machine's public IP
+// address.
 //
 // Usage:
 //
@@ -75,6 +76,26 @@ func GetIpBy(dest string) (net.IP, error) {
 	return nil, errors.New("Failed to reach " + dest)
 }
 
+// GetIpStrBy queries an API to retrieve a `string` of this machine's public IP
+// address.
+//
+// Usage:
+//
+//		package main
+//
+//		import (
+//			"fmt"
+//			"github.com/chyeh/pubip"
+//		)
+//
+//		func main() {
+//			ip, err := pubip.GetIpBy("https://api.ipify.org")
+//			if err != nil {
+//				fmt.Println("Couldn't get my IP address:", err)
+//			} else {
+//				fmt.Println("My IP address is:", ip)
+//			}
+//		}
 func GetIpStrBy(dest string) (string, error) {
 	ip, err := GetIpBy(dest)
 	return ip.String(), err
@@ -114,7 +135,8 @@ func worker(d string, r chan<- net.IP, e chan<- error) {
 	r <- ip
 }
 
-// Get queries several APIs to retrieve this machine's public IP address.
+// Get queries several APIs to retrieve a `net.IP` of this machine's public IP
+// address.
 //
 // Usage:
 //
@@ -158,6 +180,26 @@ func Get() (net.IP, error) {
 	}
 }
 
+// GetStr queries several APIs to retrieve a `string` of this machine's public
+// IP address.
+//
+// Usage:
+//
+//		package main
+//
+//		import (
+//			"fmt"
+//			"github.com/chyeh/pubip"
+//		)
+//
+//		func main() {
+//			ip, err := pubip.Get()
+//			if err != nil {
+//				fmt.Println("Couldn't get my IP address:", err)
+//			} else {
+//				fmt.Println("My IP address is:", ip)
+//			}
+//		}
 func GetStr() (string, error) {
 	ip, err := Get()
 	return ip.String(), err
