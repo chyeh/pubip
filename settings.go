@@ -27,4 +27,4 @@ var APIURIs = []string{
 }
 
 // Timeout sets the time limit of collecting results from different services.
-var Timeout = time.Second
+var Timeout = 2 * time.Second

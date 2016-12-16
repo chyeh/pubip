@@ -112,7 +112,7 @@ func detailErr(err error, errs []error) error {
 
 func validate(rs []net.IP) (net.IP, error) {
 	if rs == nil {
-		return nil, errors.New("Nil results")
+		return nil, fmt.Errorf("Failed to get any result from %d APIs", len(APIURIs))
 	}
 	if len(rs) < 3 {
 		return nil, fmt.Errorf("Less than %d results from %d APIs", 3, len(APIURIs))
