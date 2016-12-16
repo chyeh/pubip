@@ -1,5 +1,4 @@
-// Package ipify provides a single function for retrieving your computer's
-// public IP address from the ipify service: http://www.ipify.org
+// Package pubip gets your public IP address from several services
 package pubip
 
 import (
@@ -8,6 +7,7 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -15,11 +15,7 @@ import (
 	"github.com/jpillora/backoff"
 )
 
-// GetIp queries the ipify service (http://www.ipify.org) to retrieve this
-// machine's public IP address.  Returns your public IP address as a string, and
-// any error encountered.  By default, this function will run using exponential
-// backoff -- if this function fails for any reason, the request will be retried
-// up to 3 times.
+// GetIpBy queries an API to retrieve this machine's public IP address.
 //
 // Usage:
 //
@@ -27,18 +23,18 @@ import (
 //
 //		import (
 //			"fmt"
-//			"github.com/rdegges/go-ipify"
+//			"github.com/chyeh/pubip"
 //		)
 //
 //		func main() {
-//			ip, err := ipify.GetIp()
+//			ip, err := pubip.GetIpBy("https://api.ipify.org")
 //			if err != nil {
 //				fmt.Println("Couldn't get my IP address:", err)
 //			} else {
 //				fmt.Println("My IP address is:", ip)
 //			}
 //		}
-func GetIpBy(dest string) (string, error) {
+func GetIpBy(dest string) (net.IP, error) {
 	b := &backoff.Backoff{
 		Jitter: true,
 	}
@@ -46,7 +42,7 @@ func GetIpBy(dest string) (string, error) {
 
 	req, err := http.NewRequest("GET", dest, nil)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	for tries := 0; tries < MaxTries; tries++ {
@@ -61,22 +57,27 @@ func GetIpBy(dest string) (string, error) {
 
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			return "", err
+			return nil, err
 		}
 
 		if resp.StatusCode != 200 {
-			return "", errors.New(dest + " status code " + strconv.Itoa(resp.StatusCode) + ", body: " + string(body))
+			return nil, errors.New(dest + " status code " + strconv.Itoa(resp.StatusCode) + ", body: " + string(body))
 		}
 
 		tb := strings.TrimSpace(string(body))
 		ip := net.ParseIP(tb)
 		if ip == nil {
-			return "", errors.New("IP address not valid: " + tb)
+			return nil, errors.New("IP address not valid: " + tb)
 		}
-		return ip.String(), nil
+		return ip, nil
 	}
 
-	return "", errors.New("Failed to reach " + dest)
+	return nil, errors.New("Failed to reach " + dest)
+}
+
+func GetIpStrBy(dest string) (string, error) {
+	ip, err := GetIpBy(dest)
+	return ip.String(), err
 }
 
 func detailErr(err error, errs []error) error {
@@ -88,20 +89,23 @@ func detailErr(err error, errs []error) error {
 	return errors.New(j)
 }
 
-func validate(rs []string) (string, error) {
+func validate(rs []net.IP) (net.IP, error) {
+	if rs == nil {
+		return nil, errors.New("Nil results")
+	}
 	if len(rs) < 3 {
-		return "", fmt.Errorf("Less than %d results from %d APIs", 3, len(APIURIs))
+		return nil, fmt.Errorf("Less than %d results from %d APIs", 3, len(APIURIs))
 	}
 	first := rs[0]
 	for i := 1; i < len(rs); i++ {
-		if first != rs[i] {
-			return "", fmt.Errorf("Results are not identical: %s", rs)
+		if !reflect.DeepEqual(first, rs[i]) { //first != rs[i] {
+			return nil, fmt.Errorf("Results are not identical: %s", rs)
 		}
 	}
 	return first, nil
 }
 
-func worker(d string, r chan<- string, e chan<- error) {
+func worker(d string, r chan<- net.IP, e chan<- error) {
 	ip, err := GetIpBy(d)
 	if err != nil {
 		e <- err
@@ -110,9 +114,28 @@ func worker(d string, r chan<- string, e chan<- error) {
 	r <- ip
 }
 
-func Get() (string, error) {
-	var results []string
-	resultCh := make(chan string, len(APIURIs))
+// Get queries several APIs to retrieve this machine's public IP address.
+//
+// Usage:
+//
+//		package main
+//
+//		import (
+//			"fmt"
+//			"github.com/chyeh/pubip"
+//		)
+//
+//		func main() {
+//			ip, err := pubip.Get()
+//			if err != nil {
+//				fmt.Println("Couldn't get my IP address:", err)
+//			} else {
+//				fmt.Println("My IP address is:", ip)
+//			}
+//		}
+func Get() (net.IP, error) {
+	var results []net.IP
+	resultCh := make(chan net.IP, len(APIURIs))
 	var errs []error
 	errCh := make(chan error, len(APIURIs))
 
@@ -128,9 +151,14 @@ func Get() (string, error) {
 		case <-time.After(Timeout):
 			r, err := validate(results)
 			if err != nil {
-				return "", detailErr(err, errs)
+				return nil, detailErr(err, errs)
 			}
 			return r, nil
 		}
 	}
+}
+
+func GetStr() (string, error) {
+	ip, err := Get()
+	return ip.String(), err
 }

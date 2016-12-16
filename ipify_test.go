@@ -1,21 +1,23 @@
 package pubip
 
 import (
+	"net"
 	"reflect"
 	"testing"
 )
 
 func TestIsValidate(t *testing.T) {
 	tests := []struct {
-		input    []string
-		expected string
+		input    []net.IP
+		expected net.IP
 	}{
-		{[]string{}, ""},
-		{[]string{"aaa"}, ""},
-		{[]string{"aaa", "aaa"}, ""},
-		{[]string{"aaa", "aaa", "aaa"}, "aaa"},
-		{[]string{"aaa", "bbb"}, ""},
-		{[]string{"aaa", "aaa", "bbb"}, ""},
+		{nil, nil},
+		{[]net.IP{}, nil},
+		{[]net.IP{net.ParseIP("192.168.1.1")}, nil},
+		{[]net.IP{net.ParseIP("192.168.1.1"), net.ParseIP("192.168.1.1")}, nil},
+		{[]net.IP{net.ParseIP("192.168.1.1"), net.ParseIP("192.168.1.1"), net.ParseIP("192.168.1.1")}, net.ParseIP("192.168.1.1")},
+		{[]net.IP{net.ParseIP("192.168.1.1"), net.ParseIP("192.168.1.2")}, nil},
+		{[]net.IP{net.ParseIP("192.168.1.1"), net.ParseIP("192.168.1.1"), net.ParseIP("192.168.1.2")}, nil},
 	}
 	for i, v := range tests {
 		actual, _ := validate(v.input)
