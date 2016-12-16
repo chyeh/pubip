@@ -2,7 +2,7 @@ package pubip
 
 import "time"
 
-// Version indicates the version of this library.
+// Version indicates the version of this package.
 const Version = "1.0.0"
 
 // MaxTries is the maximum amount of tries to attempt to one service.

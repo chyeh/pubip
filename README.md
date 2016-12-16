@@ -1,6 +1,6 @@
 # pubip
 
-A simple library for getting your public IP address by several services. It's
+A simple package for getting your public IP address by several services. It's
 inspired by [go-ipify](https://github.com/rdegges/go-ipify).
 
 [![GitHub License](https://img.shields.io/badge/license-Unlicense-blue.svg)](https://raw.githubusercontent.com/chyeh/pubip/master/UNLICENSE)
@@ -14,7 +14,7 @@ In short, It validates the results from several services and returns the IP
 address if a valid one is found. If you have ever tried to deploy services in
 China, you would understand what the [fallacies of distributed computing](fallacies of distributed computing) are.
 Based on the assumption that the services your program depends on are not always
-available, it's better to have more backups services. This library gives you the
+available, it's better to have more backups services. This package gives you the
 public IP address from several [APIs](https://github.com/chyeh/pubip/blob/master/settings.go#L12) that I found.
 
 
@@ -26,7 +26,7 @@ To install `pubip`, simply run:
 $ go get -u github.com/chyeh/pubip
 ```
 
-This will install the latest version of the library automatically.
+This will install the latest version of the package automatically.
 
 
 ## Usage
