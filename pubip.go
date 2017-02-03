@@ -15,7 +15,7 @@ import (
 	"github.com/jpillora/backoff"
 )
 
-// GetIpBy queries an API to retrieve a `net.IP` of this machine's public IP
+// GetIPBy queries an API to retrieve a `net.IP` of this machine's public IP
 // address.
 //
 // Usage:
@@ -28,14 +28,14 @@ import (
 //		)
 //
 //		func main() {
-//			ip, err := pubip.GetIpBy("https://api.ipify.org")
+//			ip, err := pubip.GetIPBy("https://api.ipify.org")
 //			if err != nil {
 //				fmt.Println("Couldn't get my IP address:", err)
 //			} else {
 //				fmt.Println("My IP address is:", ip)
 //			}
 //		}
-func GetIpBy(dest string) (net.IP, error) {
+func GetIPBy(dest string) (net.IP, error) {
 	b := &backoff.Backoff{
 		Jitter: true,
 	}
@@ -76,7 +76,7 @@ func GetIpBy(dest string) (net.IP, error) {
 	return nil, errors.New("Failed to reach " + dest)
 }
 
-// GetIpStrBy queries an API to retrieve a `string` of this machine's public IP
+// GetIPStrBy queries an API to retrieve a `string` of this machine's public IP
 // address.
 //
 // Usage:
@@ -89,15 +89,15 @@ func GetIpBy(dest string) (net.IP, error) {
 //		)
 //
 //		func main() {
-//			ip, err := pubip.GetIpBy("https://api.ipify.org")
+//			ip, err := pubip.GetIPBy("https://api.ipify.org")
 //			if err != nil {
 //				fmt.Println("Couldn't get my IP address:", err)
 //			} else {
 //				fmt.Println("My IP address is:", ip)
 //			}
 //		}
-func GetIpStrBy(dest string) (string, error) {
-	ip, err := GetIpBy(dest)
+func GetIPStrBy(dest string) (string, error) {
+	ip, err := GetIPBy(dest)
 	return ip.String(), err
 }
 
@@ -127,7 +127,7 @@ func validate(rs []net.IP) (net.IP, error) {
 }
 
 func worker(d string, r chan<- net.IP, e chan<- error) {
-	ip, err := GetIpBy(d)
+	ip, err := GetIPBy(d)
 	if err != nil {
 		e <- err
 		return
